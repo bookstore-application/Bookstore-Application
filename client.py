@@ -106,11 +106,6 @@ class ManagerPanel(Frame):
         self.username = username
 
 
-
-
-
-
-
 in_data = client.recv(1024).decode()
 print("Message from the server:", in_data)
 

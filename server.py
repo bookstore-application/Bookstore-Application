@@ -41,15 +41,12 @@ class ClientThread(Thread):
                     found = True
                     user_role = record[2]
                     break
-
             if found:
                 msg = f"loginsuccess;{username};{user_role}".encode()
             else:
                 msg = f"loginfailure".encode()
 
             self.clientSocket.send(msg)
-
-
         except Exception:
             print(f"Error handling client {self.clientAddress}")
         finally:
