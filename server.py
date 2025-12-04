@@ -8,19 +8,15 @@ class ClientThread(Thread):
         self.clientSocket = clientSocket
         self.clientAddress = clientAddress
         self.user_records = user_records
-        self.discount_records = discount_records
         print("New connection added from", clientAddress)
 
     def run(self):
         msg = "connectionsuccess".encode()
         self.clientSocket.send(msg)
 
-        while True:
             try:
                 data = self.clientSocket.recv(1024).decode()
                 data = data.split(";")
-
-                if data[0] == "login":
 
                     username = data[1]
                     password = data[2]
@@ -51,64 +47,13 @@ class ClientThread(Thread):
                         msg = f"loginfailure".encode()
 
                     self.clientSocket.send(msg)
-
-                elif data[0] == "transaction":
-                    date = data[1]
-                    discount_code = data[2]
-                    books = data[3]
-
-                    if(books == ""): # if no books added
-                        msg = f"transactionfailure;bookNotAdded".encode()
-                        self.clientSocket.send(msg)
-                        self.clientSocket.close()
-                        return
-
-                    found = False
-                    for record in self.discount_records:
-                        record = record.split()
-                        if(record == discount_code):
-                            found = True
-                            break
-                        if not found:
-                            msg = f"transactionfailure;incorrectDiscountCode".encode()
-
-
-                    self.clientSocket.send(msg)
-
-
-
-
             except Exception:
                 print(f"Error handling client {self.clientAddress}")
             finally:
                 self.clientSocket.close()
                 print(f"Connection closed from {self.clientAddress}")
 
-def calculateTotalPrice(books):
-    totalPrice = 0
-    book = books.split(";")
-    for item in book:
-        bookID = item.split("-")[0]
-        quantity = item.split("-")[1]
-        quantity = int(quantity)
-        try:
-            file = open("inventory.txt", "r")
-            inventory_records = file.readlines()
-            if inventory_records.split(";")[0] == bookID:
-                price = float(inventory_records.split(";")[4])
-                totalPrice += price * quantity
 
-        except FileNotFoundError:
-            print("inventory.txt not found")
-            exit(1)
-
-    return totalPrice
-
-
-
-
-
-# Start TCP on 127.0.0.1 5000
 HOST = "127.0.0.1"
 PORT = 5000
 
@@ -125,17 +70,6 @@ try:
 except FileNotFoundError:
     print("users.txt file not found")
     exit(1)
-
-try:
-    discountFile = open("discounts.txt", "r")
-    discount_records = discountFile.readlines()
-    file.close()
-
-except FileNotFoundError:
-    print("discounts.txt file not found")
-    exit(1)
-
-
 
 while True:
     server.listen()
