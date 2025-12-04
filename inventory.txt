@@ -1,0 +1,20 @@
+1001;The Name of the Wind;Patrick Rothfuss;Fantasy;12.99;15
+1002;Sapiens: A Brief History of Humankind;Yuval Noah Harari;History;18.50;8
+1003;Gone Girl;Gillian Flynn;Mystery;9.75;25
+1004;The Hitchhiker's Guide to the Galaxy;Douglas Adams;Science Fiction;10.00;4
+1005;The Secret Garden;Frances Hodgson Burnett;Young Adult;7.25;11
+1006;Atomic Habits;James Clear;Self-Help;15.99;6
+1007;The Expanse: Leviathan Wakes;James S. A. Corey;Science Fiction;14.50;18
+1008;Educated: A Memoir;Tara Westover;Biography;17.99;3
+1009;A Storm of Swords;George R. R. Martin;Fantasy;11.25;22
+1010;The Whole-Brain Child;Daniel J. Siegel and Tina Payne Bryson;SelfHelp;13.00;9
+1011;Where the Crawdads Sing;Delia Owens;Mystery;10.50;5
+1012;One Hundred Years of Solitude;Gabriel Garcia Marquez;LiteraryFiction;16.75;1
+1013;The Hunger Games;Suzanne Collins;Young Adult;8.99;14
+1014;Thinking, Fast and Slow;Daniel Kahneman;Psychology;20.00;7
+1015;Good Omens;Terry Pratchett and Neil Gaiman;Fantasy;12.00;16
+1016;The Vanishing Half;Brit Bennett;Contemporary;11.50;0
+1017;My Lady Jane;Cynthia Hand and Brodi Ashton and Jodi Meadows;YoungAdult;11.99;10
+1018;The Glass Ocean;Beatriz Williams and Lauren Willig and KarenWhite;Fiction;13.50;4
+1019;The Legacy of Heorot;Larry Niven and Jerry Pournelle and StevenBarnes;Science Fiction;15.25;7
+1020;Ask A Policeman;Dorothy L. Sayers and Milward Kennedy and AnthonyBerkeley;Mystery;9.00;20

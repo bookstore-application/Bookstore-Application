@@ -1,0 +1,5 @@
+john;csh123;Cashier
+sara;csh456;Cashier
+mike;csh789;Cashier
+managera;mgrpass1;Manager
+managerb;mgrpass2;Manager
