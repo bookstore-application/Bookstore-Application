@@ -131,6 +131,7 @@ class CashierPanel(Frame):
     def closeButtonPressed(self):
         print("close button pressed")
 
+
     def addButtonPressed(self):
         print("add Button pressed")
         book_id = self.bookIDEntry.get()
@@ -144,13 +145,19 @@ class CashierPanel(Frame):
         date = datetime.now()
         discount_code = self.discountEntry.get()
         books = ";".join(self.bookList)
-        data_out = f"transaction;{date};{discount_code};{books}"
-
+        data_out = f"transaction;{date};{discount_code};{self.username};{books}"
         self.cashier.send(data_out.encode())
-
-        #if response[0] == "transactionconfirmation": h
-        #elif response[0] == "transactionfailure":
-
+        response = self.cashier.recv(1024).decode().split(";")
+        if response[0] == "transactionconfirmation":
+            messagebox.showinfo("Success", "Transaction completed successfully!")
+        elif response[0] == "transactionfailure":
+            reason = response[1]
+            if reason == "bookNotAdded":
+                messagebox.showerror("Error", "No books were added to the transaction.")
+            elif reason == "incorrectDiscountCode":
+                messagebox.showerror("Error", "Invalid discount code.")
+            else:
+                messagebox.showerror("Error", "Transaction failed.")
 
 
 class ManagerPanel(Frame):

@@ -9,6 +9,7 @@ class ClientThread(Thread):
         self.clientAddress = clientAddress
         self.user_records = user_records
         self.discount_records = discount_records
+        self.inventory_records = inventory_records
         print("New connection added from", clientAddress)
 
     def run(self):
@@ -22,13 +23,8 @@ class ClientThread(Thread):
                     break
 
                 data = data.split(";")
-            try:
-                data = self.clientSocket.recv(1024).decode()
-                data = data.split(";")
 
                 if data[0] == "login":
-                    username = data[1]
-                    password = data[2]
                     username = data[1]
                     password = data[2]
 
@@ -36,25 +32,11 @@ class ClientThread(Thread):
                         msg = f"loginfailure".encode()
                         self.clientSocket.send(msg)
                         continue
-                    if username == "" or password == "":
-                        msg = f"loginfailure".encode()
-                        self.clientSocket.send(msg)
-                        self.clientSocket.close()
-                        return
-
 
                     found = False
                     user_role = ""
                     for record in self.user_records:
                         record = record.strip()
-                        record = record.split(";")
-                        stored_username = record[0]
-                        stored_password = record[1]
-                    found = False
-                    user_role = ""
-                    for record in self.user_records:
-                        record = record.strip()
-
                         record = record.split(";")
                         stored_username = record[0]
                         stored_password = record[1]
@@ -64,14 +46,6 @@ class ClientThread(Thread):
                             user_role = record[2]
                             break
 
-                    if found:
-                        msg = f"loginsuccess;{username};{user_role}".encode()
-                    else:
-                        msg = f"loginfailure".encode()
-                        if username == stored_username and password == stored_password:
-                            found = True
-                            user_role = record[2]
-                            break
                     if found:
                         msg = f"loginsuccess;{username};{user_role}".encode()
                     else:
@@ -80,27 +54,33 @@ class ClientThread(Thread):
                     self.clientSocket.send(msg)
 
                 elif data[0] == "transaction":
+
                     date = data[1]
                     discount_code = data[2]
-                    books = data[3]
+                    cashier = data[3]
+                    books = data[4:]
 
-                    if books == "":
+                    if len(books) == 0: # handle if book is not added to the field
                         msg = f"transactionfailure;bookNotAdded".encode()
                         self.clientSocket.send(msg)
                         continue
 
                     found = False
-                    for record in self.discount_records:
-                        record = record.strip()
-                        if record == discount_code:
-                            found = True
-                            break
+                    if discount_code != "":
+                        for record in self.discount_records:
+                            record = record.strip()
+                            if record == discount_code:
+                                found = True
+                                self.deleteDiscountCode(discount_code)
+                                break
+                        if not found:
+                            msg = f"transactionfailure;incorrectDiscountCode".encode()
+                            self.clientSocket.send(msg)
+                            continue
 
-                    if not found:
-                        msg = f"transactionfailure;incorrectDiscountCode".encode()
-                    else:
-                        msg = f"transactionconfirmation".encode()
-
+                    totalPrice = self.calculateTotal(books, found)
+                    self.updateTransaction(cashier, date, found, totalPrice, books)
+                    msg = f"transactionconfirmation".encode()
                     self.clientSocket.send(msg)
 
                 elif data[0] == "addbook":
@@ -207,12 +187,59 @@ class ClientThread(Thread):
         finally:
             self.clientSocket.close()
             print(f"Connection closed from {self.clientAddress}")
-                    self.clientSocket.send(msg)
-            except Exception:
-                print(f"Error handling client {self.clientAddress}")
-            finally:
-                self.clientSocket.close()
-                print(f"Connection closed from {self.clientAddress}")
+
+    def calculateTotal(self, bookList, ifDiscount):
+        total = 0
+        for book in bookList:
+            book = book.split("-")
+            bookID = book[0]
+            bookQuantity = book[1]
+            price = self.checkInventory(bookID, bookQuantity)
+            if price < 0:
+                print("book ID: " + bookID + " Insufficient!")
+            else:
+                total += price*bookQuantity
+        if ifDiscount:
+            total = self.applyDiscount(total)
+        return total
+
+    def checkInventory(self, bookID, quantity):
+        for record in inventory_records:
+            itemID = record.split(";")[0]
+            if(itemID == bookID):
+                if quantity <= int(record.split(";")[5]):
+                    return float(record.split(";")[4])
+        return -1
+
+    def applyDiscount(self, totalPrice):
+            return (10*totalPrice)/100
+
+    def deleteDiscountCode(self, discount_code):
+        try:
+            with open("discount.txt", "r+") as discount_file:
+                lines = discount_file.readlines()
+                discount_file.seek(0)
+                for i in lines:
+                    if i!= discount_code:
+                        discount_file.write(i)
+                discount_file.truncate()
+        except FileNotFoundError:
+            print("discount.txt not found")
+            exit(1)
+
+    def updateTransaction(self, cashier, date, ifDiscount, totalPrice, bookList):
+        books = ";".join(bookList)
+        if ifDiscount:
+            discount = "Y"
+        else:
+            discount = "N"
+        record = f"{cashier};{date};{discount};{totalPrice};{books}\n"
+        try:
+            with open("transactions.txt", "a") as transaction_file:
+                transaction_file.write(record)
+        except Exception as e:
+            print("could not write to transactions.txt", e)
+
 
     def get_topselling_auther(self,lines):
         author_sales = {}
@@ -228,6 +255,7 @@ class ClientThread(Thread):
                 author_sales[author] = author_sales.get(author, 0) + int(sale)
         top_selling = max(author_sales, key=lambda author: author_sales[author])
         return top_selling, author_sales
+
     def get_mostprof_genre(self,lines):
         genre_sales ={}
 
@@ -285,15 +313,14 @@ except FileNotFoundError:
     exit(1)
 
 try:
-    with open("inventory.txt", "a"):
-        pass
-except Exception:
-    print("inventory.txt cannot be created")
+    inventoryFile = open("inventory.txt", "r")
+    inventory_records =  inventoryFile.readlines()
+except FileNotFoundError:
+    print("inventory.txt file not found")
     exit(1)
 
 while True:
     server.listen()
     clientSocket, clientAddress = server.accept()
-
-    newThread = ClientThread(clientSocket, clientAddress, user_records[:]) #passes a copy to each thread..
+    newThread = ClientThread(clientSocket, clientAddress, user_records[:], discount_records[:])
     newThread.start()
