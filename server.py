@@ -146,10 +146,31 @@ class ClientThread(Thread):
                         msg = (f"updatequantityfailure;{e}").encode()
                         self.clientSocket.send(msg)
                 elif data[0] == "report2":
+                    with open("inventory.txt", "r") as f:
+                        inventory_lines = f.readlines()
+                    with open("transactions.txt","r") as t:
+                        transaction_lines = t.readlines()
+
                     if data[1] == "Top-selling author":
                         try:
-                            topselling, authorsales = self.get_topselling_auther()
+                            topselling, authorsales = self.get_topselling_auther(inventory_lines)
                             msg = f"report2;{topselling};{authorsales[topselling]}".encode()
+                            self.clientSocket.send(msg)
+                        except Exception as e:
+                            msg = f"report2;{e}".encode()
+                            self.clientSocket.send(msg)
+                    elif data[1]== "Most profitable Genre":
+                        try:
+                            most_profitable, sales = self.get_mostprof_genre(inventory_lines)
+                            msg = f"report2;{most_profitable};{sales}".encode()
+                            self.clientSocket.send(msg)
+                        except Exception as e:
+                            msg = f"report2;{e}".encode()
+                            self.clientSocket.send(msg)
+                    elif data[1]=="Busiest cashier":
+                        try:
+                            busiest_cashier, transactions = self.get_busiest_cashier(transaction_lines)
+                            msg = f"report2;{busiest_cashier.title()};{transactions} sales".encode()
                             self.clientSocket.send(msg)
                         except Exception as e:
                             msg = f"report2;{e}".encode()
@@ -160,11 +181,8 @@ class ClientThread(Thread):
             self.clientSocket.close()
             print(f"Connection closed from {self.clientAddress}")
 
-    def get_topselling_auther(self):
+    def get_topselling_auther(self,lines):
         author_sales = {}
-
-        with open("inventory.txt", "r") as f:
-            lines = f.readlines()
 
         for line in lines:
             inventory_data = line.strip().split(";")
@@ -177,8 +195,36 @@ class ClientThread(Thread):
                 author_sales[author] = author_sales.get(author, 0) + int(sale)
         top_selling = max(author_sales, key=lambda author: author_sales[author])
         return top_selling, author_sales
+    def get_mostprof_genre(self,lines):
+        genre_sales ={}
 
+        for line in lines:
+            inventory_data = line.strip().split(";")
+            genre = inventory_data[3].strip().title()
+            price = float(inventory_data[4])
+            sales = int(inventory_data[5])
 
+            if genre not in genre_sales:
+                genre_sales[genre] = price*sales
+            else:
+                genre_sales[genre] += price*sales
+
+        # most_profitable = max(genre_sales, key=genre_sales.get)
+        most_profitable = max(genre_sales, key= lambda sales: genre_sales[sales])
+        return most_profitable, round(genre_sales[most_profitable], 2)
+
+    def get_busiest_cashier(self, lines):
+        cashiers_counter = {}
+        for line in lines:
+            transaction_data = line.strip().split(";")
+            cashier = transaction_data[0]
+
+            if cashier in cashiers_counter:
+                cashiers_counter[cashier] += 1
+            else:
+                cashiers_counter[cashier] = 1
+        busiest = max(cashiers_counter, key=cashiers_counter.get)
+        return busiest, cashiers_counter[busiest]
 
 HOST = "127.0.0.1"
 PORT = 5000
