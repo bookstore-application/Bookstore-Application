@@ -284,22 +284,29 @@ class ManagerPanel(Frame):
             messagebox.showerror("updatequantity failured", response[1])
 
     def generateStatistics(self):
-        print("generateStatistics")
         choice = self.statsVar.get()
 
-        labels = {1:"Top-selling author", 2:"Most profitable Genre", 3:"Busiest cashier"}
-        request = f"report2;{labels[choice]}"
+        # labels = {1:"report1", 2:"report2", 3:"report3"}
+        # request = f"{labels[choice]}"
+        request = f"report{choice}"
 
         self.manager.send(request.encode())
         response = self.manager.recv(1024).decode().split(";")
 
         if response[0]=="report2":
-            messagebox.showinfo(f"{labels[choice]}",f"{response[1]}: {response[2]}")
+            messagebox.showinfo(f"report{choice}",f"{response[1]}: {response[2]}")
         else:
             messagebox.showerror("Error", response[1])
 
     def closePanel(self):
+        try:
+            self.manager.send("closeconnection".encode())
+            self.manager.close()
+        except Exception as e:
+            print(f"Error: {e}")
+
         print("Closing Panel")
+        self.master.destroy()
 
 
 in_data = client.recv(1024).decode()
