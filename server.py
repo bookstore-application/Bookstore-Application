@@ -9,7 +9,6 @@ class ClientThread(Thread):
         self.clientAddress = clientAddress
         self.user_records = user_records
         self.discount_records = discount_records
-        self.inventory_records = inventory_records
         print("New connection added from", clientAddress)
 
     def run(self):
@@ -71,7 +70,6 @@ class ClientThread(Thread):
                             record = record.strip()
                             if record == discount_code:
                                 found = True
-                                self.deleteDiscountCode(discount_code)
                                 break
                         if not found:
                             msg = f"transactionfailure;incorrectDiscountCode".encode()
@@ -79,8 +77,17 @@ class ClientThread(Thread):
                             continue
 
                     totalPrice = self.calculateTotal(books, found)
+                    if totalPrice < 0:
+                        msg = f"transactionfailure;insufficientamountofstock".encode()
+                        self.clientSocket.send(msg)
+                        continue
+
+                    self.updateInventory(books)
                     self.updateTransaction(cashier, date, found, totalPrice, books)
-                    msg = f"transactionconfirmation".encode()
+
+                    if found:
+                        self.deleteDiscountCode(discount_code)
+                    msg = f"transactionconfirmation;{totalPrice}".encode()
                     self.clientSocket.send(msg)
 
                 elif data[0] == "addbook":
@@ -197,34 +204,41 @@ class ClientThread(Thread):
             price = self.checkInventory(bookID, bookQuantity)
             if price < 0:
                 print("book ID: " + bookID + " Insufficient!")
-            else:
-                total += price*bookQuantity
+                return -1
+            total += price * int(bookQuantity)
         if ifDiscount:
             total = self.applyDiscount(total)
         return total
 
     def checkInventory(self, bookID, quantity):
+        with open("inventory.txt", "r") as f:
+            inventory_records = f.readlines()
         for record in inventory_records:
             itemID = record.split(";")[0]
             if(itemID == bookID):
-                if quantity <= int(record.split(";")[5]):
+                if int(quantity) <= int(record.split(";")[5]):
                     return float(record.split(";")[4])
         return -1
 
     def applyDiscount(self, totalPrice):
-            return (10*totalPrice)/100
+            return totalPrice * 0.9
 
     def deleteDiscountCode(self, discount_code):
         try:
-            with open("discount.txt", "r+") as discount_file:
+            with open("discountcodes.txt", "r+") as discount_file:
                 lines = discount_file.readlines()
                 discount_file.seek(0)
                 for i in lines:
-                    if i!= discount_code:
+                    if i.strip() != discount_code:
                         discount_file.write(i)
                 discount_file.truncate()
+            temp = []
+            for code in self.discount_records:
+                if code.strip() != discount_code:
+                    temp.append(code)
+            self.discount_records = temp
         except FileNotFoundError:
-            print("discount.txt not found")
+            print("discountcodes.txt not found")
             exit(1)
 
     def updateTransaction(self, cashier, date, ifDiscount, totalPrice, bookList):
@@ -239,7 +253,31 @@ class ClientThread(Thread):
                 transaction_file.write(record)
         except Exception as e:
             print("could not write to transactions.txt", e)
+            exit(1)
 
+    def updateInventory(self, bookList):
+        with open("inventory.txt", "r") as f:
+            inventory_records = f.readlines()
+
+        updated_inventory = []
+
+        for record in inventory_records:
+            record = record.strip()
+            data = record.split(";")
+
+            for item in bookList:
+                bookID = item.split("-")[0]
+                quantity = int(item.split("-")[1])
+
+                if data[0] == bookID:
+                    stock = int(data[5])
+                    updatedStock = stock - quantity
+                    data[5] = str(updatedStock)
+
+            updated_inventory.append(";".join(data) + "\n")
+
+        with open("inventory.txt", "w") as inventory_file:
+            inventory_file.writelines(updated_inventory)
 
     def get_topselling_auther(self,lines):
         author_sales = {}
@@ -310,13 +348,6 @@ try:
     discountFile.close()
 except FileNotFoundError:
     print("discountcodes.txt file not found")
-    exit(1)
-
-try:
-    inventoryFile = open("inventory.txt", "r")
-    inventory_records =  inventoryFile.readlines()
-except FileNotFoundError:
-    print("inventory.txt file not found")
     exit(1)
 
 while True:

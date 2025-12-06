@@ -134,28 +134,42 @@ class CashierPanel(Frame):
 
     def addButtonPressed(self):
         print("add Button pressed")
-        book_id = self.bookIDEntry.get()
-        quantity = self.quantityEntry.get()
+        book_id = self.bookIDEntry.get().strip()
+        quantity = self.quantityEntry.get().strip()
+        if book_id == "" or quantity == "":
+            messagebox.showerror("Error", "Book ID and Quantity fields can not be empty!")
+            return
         book = f"{book_id}-{quantity}"
         self.bookList.append(book)
         self.bookEntry.insert(END, book + "\n")
 
     def transactionButtonPressed(self):
         print("Transaction button pressed")
-        date = datetime.now()
+        date = datetime.now().strftime("%Y-%m-%d %H:%M:%S") # format the date to get rid of microseconds !
         discount_code = self.discountEntry.get()
         books = ";".join(self.bookList)
         data_out = f"transaction;{date};{discount_code};{self.username};{books}"
         self.cashier.send(data_out.encode())
         response = self.cashier.recv(1024).decode().split(";")
+
         if response[0] == "transactionconfirmation":
-            messagebox.showinfo("Success", "Transaction completed successfully!")
+            data = response[1]
+            messagebox.showinfo("Success", f"Transaction completed successfully! Total Price: {data}")
+            self.bookList = []
+            self.bookEntry.delete("1.0", END)
+            self.bookIDEntry.delete(0, END)
+            self.quantityEntry.delete(0, END)
+            self.discountEntry.delete(0, END)
+
+
         elif response[0] == "transactionfailure":
             reason = response[1]
             if reason == "bookNotAdded":
                 messagebox.showerror("Error", "No books were added to the transaction.")
+
             elif reason == "incorrectDiscountCode":
                 messagebox.showerror("Error", "Invalid discount code.")
+
             else:
                 messagebox.showerror("Error", "Transaction failed.")
 
@@ -262,6 +276,7 @@ class ManagerPanel(Frame):
         self.closeButton = Button(closeButtonFrame, text="Close", width=10,
                                   command=self.closePanel)
         self.closeButton.pack()
+
     def addBook(self):
         add_book_data = f"addbook;{self.bookIDEntry.get()};{self.titleEntry.get()};{self.authorsEntry.get()};{self.genreEntry.get()};{self.priceEntry.get()};{self.quantityEntry.get()}"
         self.manager.send(add_book_data.encode())
