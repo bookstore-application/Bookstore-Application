@@ -1,0 +1,20 @@
+1001;The name of wind;patrick;fantasy;12.99;15
+1002;Sapiens:A brief history of humankind;Yuval Noah Harari;History;18.5;8
+1003;Gone Girl;Gillian Glynn;Mystery;9.75;25
+1004;The Hitchhiker's Guide to the Galaxy;Douglas Adams;Science Fiction;10.00;4
+1020;Ask A Policeman;Dorothy L. Sayers and Milward Kennedy and Anthony Berkele;Mystery;9.00;20
+1019;The Legacy of Heorot;Larry Niven and Jerry Pournelle and Steven Barnes;Science Fiction;15.25;17
+1018;The Glass Ocean;Beatriz Williams and Lauren Willig White;Fiction;13.5;4
+1017;My Lady Jane;Cynthia Hand and Brodi Ashton and Jodi;Young Adult;11.9;10
+1016;The Vanishing Half;Brit Bennett;Contemporary;11.5;33
+1015;Good Omens;Terry Pratchett and Neil Gaiman;Fantasy;12.00;16
+1014;Thinking, Fast and Slow;Daniel Kahneman;Psychology;20.00;7
+1013;The Hunger Games;Suzanne Collins;Young Adult;8.99;14
+1012;One Hundred Years of Solitude;Gabriel Garcia Marquez;Literary Fiction;16.75;1
+1011;Where the Crawdads Sing;Delia Owens;Mystery;10.5;5
+1010;The Whole-Brain Child;Daniel J.Siegel and Tina Payne Bryson;Self-Help;13.00;9
+1009;A Storm of Swords;George R. R. Martin;Fantasy;11.25;22
+1009;A Storm of Swords;George R. R. Martin;Fantasy;22;11.25
+1017;My Lady Jane;Cynthia Hand and Brodi Ashton and Jodi Meadows;Young Adult;11.9;4
+1010;The Whole-Brain Child;Daniel J. Siegel and Tina Payne Bryson;Self Help;13.00;9
+1021;The Legacy of Heorot;Larry Niven and Jerry Pournelle and Steven  Barnes;Science Fiction;15.25;97
